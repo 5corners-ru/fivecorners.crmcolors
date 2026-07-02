@@ -106,19 +106,20 @@ class fivecorners_crmcolors extends CModule
         if (!$connection->isTableExists($tableName)) {
             \FiveCorners\CrmColors\RuleTable::getEntity()->createDbTable();
 
-            $sqlHelper = $connection->getSqlHelper();
             try {
                 $connection->queryExecute(
-                    'CREATE INDEX IDX_FC_CC_ENTITY ON ' . $sqlHelper->quote($tableName)
-                    . ' ('
-                    . $sqlHelper->quoteIdentifier('ENTITY_TYPE')   . ', '
-                    . $sqlHelper->quoteIdentifier('CATEGORY_ID')   . ', '
-                    . $sqlHelper->quoteIdentifier('SMART_TYPE_ID') . ', '
-                    . $sqlHelper->quoteIdentifier('ACTIVE')
-                    . ')'
+                    "CREATE INDEX IDX_FC_CC_ENTITY ON `$tableName` (`ENTITY_TYPE`, `CATEGORY_ID`, `SMART_TYPE_ID`, `ACTIVE`)"
                 );
             } catch (\Throwable $e) {
                 // индекс уже есть — не критично
+            }
+        } else {
+            try {
+                $connection->queryExecute(
+                    "ALTER TABLE `$tableName` ADD COLUMN `ACTION_CARD_COLOR_MODE` VARCHAR(20) DEFAULT 'FILL'"
+                );
+            } catch (\Throwable $e) {
+                // колонка уже есть — не критично
             }
         }
     }

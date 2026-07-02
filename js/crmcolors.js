@@ -54,24 +54,108 @@
         return false;
     }
 
+    function camelToKebab(prop) {
+        return prop.replace(/([A-Z])/g, '-$1').toLowerCase();
+    }
+
+    // Устанавливает произвольное CSS-свойство на элемент, запоминая оригинал (для reset)
+    function setElStyle(el, prop, value) {
+        if (!el) return;
+        var propsAttr = el.getAttribute('data-fc-cc-props');
+        var props = propsAttr ? propsAttr.split(',') : [];
+        if (props.indexOf(prop) === -1) {
+            el.setAttribute('data-fc-cc-orig-' + prop, el.style[prop] || '');
+            props.push(prop);
+            el.setAttribute('data-fc-cc-props', props.join(','));
+        }
+        el.setAttribute('data-fc-cc-colored', '1');
+        el.style.setProperty(camelToKebab(prop), value);
+    }
+
     // Устанавливает background-color на элемент, запоминая оригинал
     function setElColor(el, color) {
+        setElStyle(el, 'backgroundColor', color);
+    }
+
+    // Красит карточку Канбана: заливкой целиком или контуром (без изменения layout)
+    function applyCardColor(el, color, mode) {
         if (!el) return;
-        if (!el.hasAttribute('data-fc-cc-colored')) {
-            el.setAttribute('data-fc-cc-orig-bg', el.style.backgroundColor || '');
-            el.setAttribute('data-fc-cc-colored', '1');
+        if (mode === 'BORDER') {
+            setElStyle(el, 'boxShadow', 'inset 0 0 0 3px ' + color);
+        } else {
+            setElColor(el, color);
         }
-        el.style.backgroundColor = color;
+    }
+
+    function parseHexColor(hex) {
+        var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(String(hex || '').trim());
+        if (!m) return null;
+        return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) };
+    }
+
+    // Контрастный цвет текста (чёрный/белый) относительно фона — по относительной яркости
+    function getContrastTextColor(hex) {
+        var c = parseHexColor(hex);
+        if (!c) return null;
+        var lum = (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
+        return lum > 0.6 ? '#000000' : '#ffffff';
+    }
+
+    // Форсирует читаемый цвет текста внутри окрашенного поля (иначе подпись поля
+    // теряется — у Bitrix она рендерится светло-серым, невидимым на ярком фоне)
+    function applyContrastText(rootEl, bgColor) {
+        var textColor = getContrastTextColor(bgColor);
+        if (!textColor || !rootEl) return;
+        var nodes = rootEl.querySelectorAll('*');
+        var targets = [rootEl];
+        for (var i = 0; i < nodes.length; i++) targets.push(nodes[i]);
+        for (var j = 0; j < targets.length; j++) {
+            var n = targets[j];
+            if (!n.hasAttribute('data-fc-cc-text-colored')) {
+                n.setAttribute('data-fc-cc-orig-color', n.style.color || '');
+                n.setAttribute('data-fc-cc-text-colored', '1');
+            }
+            n.style.setProperty('color', textColor, 'important');
+        }
+    }
+
+    // Красит поле (фон + читаемый текст поверх)
+    function setFieldColor(el, color) {
+        setElColor(el, color);
+        applyContrastText(el, color);
+    }
+
+    // querySelectorAll не включает сам scope-элемент — добавляем его отдельно,
+    // иначе элемент, окрашенный напрямую (не через потомка), никогда не очистится
+    function _queryScoped(scope, selector) {
+        var result = (scope.nodeType === 1 && scope.matches && scope.matches(selector)) ? [scope] : [];
+        var found = scope.querySelectorAll(selector);
+        for (var i = 0; i < found.length; i++) result.push(found[i]);
+        return result;
     }
 
     // Сбрасывает все ранее установленные модулем цвета в документе (или в контейнере)
     function resetColors(root) {
         var scope = root || document;
-        var colored = scope.querySelectorAll('[data-fc-cc-colored]');
+
+        var colored = _queryScoped(scope, '[data-fc-cc-colored]');
         for (var i = 0; i < colored.length; i++) {
-            colored[i].style.backgroundColor = colored[i].getAttribute('data-fc-cc-orig-bg') || '';
-            colored[i].removeAttribute('data-fc-cc-colored');
-            colored[i].removeAttribute('data-fc-cc-orig-bg');
+            var el = colored[i];
+            var propsAttr = el.getAttribute('data-fc-cc-props') || 'backgroundColor';
+            var props = propsAttr.split(',');
+            for (var p = 0; p < props.length; p++) {
+                el.style[props[p]] = el.getAttribute('data-fc-cc-orig-' + props[p]) || '';
+                el.removeAttribute('data-fc-cc-orig-' + props[p]);
+            }
+            el.removeAttribute('data-fc-cc-colored');
+            el.removeAttribute('data-fc-cc-props');
+        }
+
+        var textColored = _queryScoped(scope, '[data-fc-cc-text-colored]');
+        for (var j = 0; j < textColored.length; j++) {
+            textColored[j].style.color = textColored[j].getAttribute('data-fc-cc-orig-color') || '';
+            textColored[j].removeAttribute('data-fc-cc-text-colored');
+            textColored[j].removeAttribute('data-fc-cc-orig-color');
         }
     }
 
@@ -242,7 +326,7 @@
                     var fc = rule.actionFieldCode || rule.conditionField;
                     var fieldEl = findFieldElement(fc, editor);
                     if (!isFieldEditing(fieldEl)) {
-                        setElColor(fieldEl, rule.actionFieldColor);
+                        setFieldColor(fieldEl, rule.actionFieldColor);
                     }
                 }
             });
@@ -384,7 +468,7 @@
             if (!conditionMatches(rule, fv)) return;
 
             if (rule.actionCardColor && fw) {
-                setElColor(fw.parentElement || fw, rule.actionCardColor);
+                applyCardColor(fw.parentElement || fw, rule.actionCardColor, rule.actionCardColorMode);
             }
 
             if (rule.actionFieldColor) {
@@ -405,7 +489,7 @@
         var root = item.container || item.el || null;
         if (root) {
             var el = _findKanbanFieldEl(root, fieldCode);
-            if (el) { setElColor(el, color); return; }
+            if (el) { setFieldColor(el, color); return; }
         }
 
         var fw = getItemFieldsWrapper(item);
@@ -413,7 +497,7 @@
 
         // Стратегия 2: атрибутный поиск внутри fw
         var el2 = _findKanbanFieldEl(fw, fieldCode);
-        if (el2) { setElColor(el2, color); return; }
+        if (el2) { setFieldColor(el2, color); return; }
 
         var fields = (item.options && item.options.data && item.options.data.fields) || [];
 
@@ -436,7 +520,7 @@
             for (var j = 0; j < fw.children.length; j++) {
                 var cText = (fw.children[j].textContent || fw.children[j].innerText || '').trim();
                 if (cText.indexOf(searchText) !== -1) {
-                    setElColor(fw.children[j], color);
+                    setFieldColor(fw.children[j], color);
                     return;
                 }
             }
@@ -456,7 +540,7 @@
             if (fc !== fieldCode) continue;
             var fwIdx = k - numStd;
             if (fwIdx >= 0 && fw.children[fwIdx]) {
-                setElColor(fw.children[fwIdx], color);
+                setFieldColor(fw.children[fwIdx], color);
                 return;
             }
         }
@@ -507,7 +591,7 @@
                 items.forEach(function (itemEl) {
                     // Внутренний элемент карточки — .crm-kanban-item
                     var card = itemEl.querySelector('.crm-kanban-item') || itemEl;
-                    setElColor(card, rule.actionCardColor);
+                    applyCardColor(card, rule.actionCardColor, rule.actionCardColorMode);
                 });
             }
         });

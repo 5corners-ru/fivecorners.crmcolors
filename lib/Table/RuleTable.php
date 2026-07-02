@@ -70,6 +70,10 @@ class RuleTable extends DataManager
             new StringField('ACTION_CARD_COLOR', [
                 'nullable' => true,
             ]),
+            // Способ раскраски карточки: FILL (заливка) | BORDER (контур)
+            new StringField('ACTION_CARD_COLOR_MODE', [
+                'default_value' => 'FILL',
+            ]),
             // Цвет поля (hex), пусто = не красить поле
             new StringField('ACTION_FIELD_COLOR', [
                 'nullable' => true,

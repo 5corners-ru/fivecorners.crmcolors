@@ -24,9 +24,10 @@ class Manager
                 'conditionField' => (string)$row['CONDITION_FIELD'],
                 'conditionValue' => $row['CONDITION_VALUE'] !== null ? (string)$row['CONDITION_VALUE'] : null,
                 'conditionDays'  => $row['CONDITION_DAYS'] !== null ? (int)$row['CONDITION_DAYS'] : null,
-                'actionCardColor'  => $row['ACTION_CARD_COLOR']  ?: null,
-                'actionFieldColor' => $row['ACTION_FIELD_COLOR'] ?: null,
-                'actionFieldCode'  => $row['ACTION_FIELD_CODE']  ?: null,
+                'actionCardColor'     => $row['ACTION_CARD_COLOR']  ?: null,
+                'actionCardColorMode' => $row['ACTION_CARD_COLOR_MODE'] ?: 'FILL',
+                'actionFieldColor'    => $row['ACTION_FIELD_COLOR'] ?: null,
+                'actionFieldCode'     => $row['ACTION_FIELD_CODE']  ?: null,
             ];
         }
 

@@ -19,6 +19,8 @@ $MESS['FCO_CC_EDIT_FIELD_COND_VALUE']  = 'Value to compare';
 $MESS['FCO_CC_EDIT_FIELD_COND_DAYS']   = 'Days ahead (approaching)';
 
 $MESS['FCO_CC_EDIT_FIELD_CARD_COLOR']   = 'Card color (Kanban)';
+$MESS['FCO_CC_EDIT_CARD_MODE_FILL']     = 'Fill entire card';
+$MESS['FCO_CC_EDIT_CARD_MODE_BORDER']   = 'Outline (border)';
 $MESS['FCO_CC_EDIT_FIELD_FIELD_CODE']   = 'Field code to highlight';
 $MESS['FCO_CC_EDIT_FIELD_FIELD_COLOR']  = 'Field color';
 

@@ -64,9 +64,10 @@ $fields = [
     'CONDITION_FIELD'    => '',
     'CONDITION_VALUE'    => '',
     'CONDITION_DAYS'     => 3,
-    'ACTION_CARD_COLOR'  => '',
-    'ACTION_FIELD_CODE'  => '',
-    'ACTION_FIELD_COLOR' => '',
+    'ACTION_CARD_COLOR'      => '',
+    'ACTION_CARD_COLOR_MODE' => 'FILL',
+    'ACTION_FIELD_CODE'      => '',
+    'ACTION_FIELD_COLOR'     => '',
 ];
 
 if (!$isNew) {
@@ -96,9 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid()) {
         $fields['CONDITION_FIELD'] = ($fields['ENTITY_TYPE'] === 'LEAD') ? 'STATUS_ID' : 'STAGE_ID';
     }
     $fields['CONDITION_DAYS']     = ((int)($_POST['CONDITION_DAYS'] ?? 0)) ?: null;
-    $fields['ACTION_CARD_COLOR']  = trim((string)($_POST['ACTION_CARD_COLOR'] ?? ''));
-    $fields['ACTION_FIELD_CODE']  = trim((string)($_POST['ACTION_FIELD_CODE'] ?? ''));
-    $fields['ACTION_FIELD_COLOR'] = trim((string)($_POST['ACTION_FIELD_COLOR'] ?? ''));
+    $fields['ACTION_CARD_COLOR']      = trim((string)($_POST['ACTION_CARD_COLOR'] ?? ''));
+    $fields['ACTION_CARD_COLOR_MODE'] = ((string)($_POST['ACTION_CARD_COLOR_MODE'] ?? 'FILL')) === 'BORDER' ? 'BORDER' : 'FILL';
+    $fields['ACTION_FIELD_CODE']      = trim((string)($_POST['ACTION_FIELD_CODE'] ?? ''));
+    $fields['ACTION_FIELD_COLOR']     = trim((string)($_POST['ACTION_FIELD_COLOR'] ?? ''));
 
     // ——— Нормализация (до валидации) ———
     if (empty($_POST['ENABLE_CARD_COLOR']) || $fields['ACTION_CARD_COLOR'] === '') {
@@ -182,7 +184,6 @@ PageHeader::renderOpen($moduleVersion, 'rules');
 <style>
 .fc-cc-hint { font-size:11px; color:#888; margin-top:3px; }
 .fc-cc-color-row { display:flex; align-items:center; gap:8px; }
-.fc-cc-color-preview { width:32px; height:24px; border-radius:4px; border:1px solid #ccc; display:inline-block; }
 </style>
 
 <?php if ($errors): ?>
@@ -325,11 +326,22 @@ PageHeader::renderOpen($moduleVersion, 'rules');
                 <?= $fields['ACTION_CARD_COLOR'] ? 'checked' : '' ?>
                 onchange="fcCcToggleColorPicker('fc_cc_card_color_wrap', this.checked)">
             <div id="fc_cc_card_color_wrap" <?= $fields['ACTION_CARD_COLOR'] ? '' : 'style="display:none"' ?>>
-                <input type="color" name="ACTION_CARD_COLOR" id="fc_cc_card_color"
-                    value="<?= htmlspecialcharsbx($fields['ACTION_CARD_COLOR'] ?: '#ffff99') ?>"
-                    oninput="document.getElementById('fc_cc_card_preview').style.background=this.value">
-                <span class="fc-cc-color-preview" id="fc_cc_card_preview"
-                    style="background:<?= htmlspecialcharsbx($fields['ACTION_CARD_COLOR'] ?: '#ffff99') ?>"></span>
+                <div class="fc-cc-color-row">
+                    <input type="color" name="ACTION_CARD_COLOR" id="fc_cc_card_color"
+                        value="<?= htmlspecialcharsbx($fields['ACTION_CARD_COLOR'] ?: '#ffff99') ?>">
+                </div>
+                <div class="fc-cc-color-row" style="margin-top:8px;">
+                    <label>
+                        <input type="radio" name="ACTION_CARD_COLOR_MODE" value="FILL"
+                            <?= $fields['ACTION_CARD_COLOR_MODE'] !== 'BORDER' ? 'checked' : '' ?>>
+                        <?= Loc::getMessage('FCO_CC_EDIT_CARD_MODE_FILL') ?>
+                    </label>
+                    <label>
+                        <input type="radio" name="ACTION_CARD_COLOR_MODE" value="BORDER"
+                            <?= $fields['ACTION_CARD_COLOR_MODE'] === 'BORDER' ? 'checked' : '' ?>>
+                        <?= Loc::getMessage('FCO_CC_EDIT_CARD_MODE_BORDER') ?>
+                    </label>
+                </div>
             </div>
         </div>
     </td>
@@ -348,10 +360,7 @@ PageHeader::renderOpen($moduleVersion, 'rules');
                 onchange="fcCcToggleColorPicker('fc_cc_field_color_wrap', this.checked)">
             <div id="fc_cc_field_color_wrap" <?= $fields['ACTION_FIELD_COLOR'] ? '' : 'style="display:none"' ?>>
                 <input type="color" name="ACTION_FIELD_COLOR" id="fc_cc_field_color"
-                    value="<?= htmlspecialcharsbx($fields['ACTION_FIELD_COLOR'] ?: '#fff3cd') ?>"
-                    oninput="document.getElementById('fc_cc_field_preview').style.background=this.value">
-                <span class="fc-cc-color-preview" id="fc_cc_field_preview"
-                    style="background:<?= htmlspecialcharsbx($fields['ACTION_FIELD_COLOR'] ?: '#fff3cd') ?>"></span>
+                    value="<?= htmlspecialcharsbx($fields['ACTION_FIELD_COLOR'] ?: '#fff3cd') ?>">
             </div>
         </div>
     </td>

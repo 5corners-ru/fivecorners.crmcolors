@@ -19,6 +19,8 @@ $MESS['FCO_CC_EDIT_FIELD_COND_VALUE']  = 'Значение для сравнен
 $MESS['FCO_CC_EDIT_FIELD_COND_DAYS']   = 'Кол-во дней (приближение)';
 
 $MESS['FCO_CC_EDIT_FIELD_CARD_COLOR']   = 'Цвет карточки (Канбан)';
+$MESS['FCO_CC_EDIT_CARD_MODE_FILL']     = 'Заливка целиком';
+$MESS['FCO_CC_EDIT_CARD_MODE_BORDER']   = 'Контур (рамка)';
 $MESS['FCO_CC_EDIT_FIELD_FIELD_CODE']   = 'Код поля для подсветки';
 $MESS['FCO_CC_EDIT_FIELD_FIELD_COLOR']  = 'Цвет поля';
 
